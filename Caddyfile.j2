@@ -1,0 +1,42 @@
+# Login gate for Collie. Only prod exists: the hostname is fixed and the
+# upstream is a host process, so PR previews make no sense here.
+collie.yarden-zamir.com {
+    # Never trust this header from the client; forward_auth sets it below.
+    request_header -X-Auth-Request-User
+
+    # oauth2-proxy owns the login flow under /auth/* (sign_in, callback, auth).
+    handle /auth/* {
+        reverse_proxy unix//{{ paths.default_socket }} {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-Uri {uri}
+        }
+    }
+
+    # Pack link from peer Collies (the Mac). No browser login here: Collie gates
+    # these routes itself with the pack secret and pinned certificates
+    # (PACK_PROTOCOL.md section 8). A missing or wrong secret answers 401.
+    handle /pack/v1/* {
+        reverse_proxy 127.0.0.1:8787 {
+            header_up Host {host}
+        }
+    }
+
+    handle {
+        forward_auth unix//{{ paths.default_socket }} {
+            uri /auth/auth
+            header_up X-Real-IP {remote_host}
+            # Collie reads this as the device id (COLLIE_DEVICE_HEADER) for write access.
+            copy_headers X-Auth-Request-User
+
+            @error status 401
+            handle_response @error {
+                redir * /auth/sign_in?rd={scheme}://{host}{uri}
+            }
+        }
+
+        # The Collie bridge is a host process (systemd --user), not a container.
+        reverse_proxy 127.0.0.1:8787 {
+            header_up Host {host}
+        }
+    }
+}

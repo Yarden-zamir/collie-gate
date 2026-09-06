@@ -1,0 +1,53 @@
+# oauth2-proxy: the login gate in front of Collie (https://github.com/AltanS/collie).
+# Caddy (host) sends every request for collie.yarden-zamir.com through
+# forward_auth to this container, then proxies allowed requests to the Collie
+# bridge on 127.0.0.1:8787. Collie itself is not a container: it must run next
+# to the herdr socket as the same user, so it is installed by hand on the VPS.
+#
+# Params (GitHub repo settings, prefix KITSHN_ stripped by KitSHn):
+#   OAUTH2_PROXY_CLIENT_ID      var:    GitHub OAuth app client id
+#   OAUTH2_PROXY_CLIENT_SECRET  secret: GitHub OAuth app client secret
+#   OAUTH2_PROXY_COOKIE_SECRET  secret: 32 random bytes, base64 (openssl rand -base64 32)
+services:
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.4
+    # The image runs as uid 2000. The socket dir is root-owned, so bind as root.
+    # Limit: revisit when KitSHn creates the socket dir group-writable.
+    user: "0:0"
+    command:
+      - --http-address=unix://${KITSHN_DEFAULT_SOCKET},mode=0666
+      - --provider=github
+      # Collie service workers bypass caching for /auth/*; keep the login flow there.
+      - --proxy-prefix=/auth
+      - --redirect-url=https://collie.yarden-zamir.com/auth/callback
+      - --whitelist-domain=collie.yarden-zamir.com
+      - --reverse-proxy=true
+      # Sends X-Auth-Request-User on 2xx; Caddy copies it to the request for Collie's write gate.
+      - --set-xauthrequest=true
+      # --github-user alone does not restrict logins (providers/github.go checkRestrictions),
+      # so the exact-email allowlist is the real gate. Both must match.
+      - --github-user=Yarden-zamir
+      - --authenticated-emails-file=/config/emails.txt
+      - --skip-provider-button=true
+      - --cookie-secure=true
+      - --cookie-samesite=lax
+      - --cookie-expire=720h
+      - --cookie-refresh=0
+      # forward_auth uses /auth/auth only; oauth2-proxy still needs one upstream to start.
+      - --upstream=static://202
+    environment:
+      OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_PROXY_CLIENT_ID:?OAUTH2_PROXY_CLIENT_ID is required}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OAUTH2_PROXY_CLIENT_SECRET:?OAUTH2_PROXY_CLIENT_SECRET is required}
+      OAUTH2_PROXY_COOKIE_SECRET: ${OAUTH2_PROXY_COOKIE_SECRET:?OAUTH2_PROXY_COOKIE_SECRET is required}
+      KITSHN_RECIPE: ${KITSHN_RECIPE}
+      KITSHN_ENVIRONMENT: ${KITSHN_ENVIRONMENT}
+      KITSHN_DEPLOYMENT: ${KITSHN_DEPLOYMENT}
+    volumes:
+      - ${KITSHN_SOCKET_DIR}:${KITSHN_SOCKET_DIR}
+      - ./emails.txt:/config/emails.txt:ro
+    healthcheck:
+      test: ["CMD", "test", "-S", "${KITSHN_DEFAULT_SOCKET}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
