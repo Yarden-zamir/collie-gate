@@ -45,9 +45,7 @@ services:
     volumes:
       - ${KITSHN_SOCKET_DIR}:${KITSHN_SOCKET_DIR}
       - ./emails.txt:/config/emails.txt:ro
-    healthcheck:
-      test: ["CMD", "test", "-S", "${KITSHN_DEFAULT_SOCKET}"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+    # No healthcheck: the image is distroless (no shell, no test, no curl), so a
+    # CMD check can never pass. KitSHn then waits for "running" only. Limit:
+    # revisit if oauth2-proxy ships a health binary or KitSHn learns socket probes.
     restart: unless-stopped
