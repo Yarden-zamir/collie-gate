@@ -15,7 +15,7 @@ collie.yarden-zamir.com {
     # Pack link from peer Collies (the Mac). No browser login here: Collie gates
     # these routes itself with the pack secret and pinned certificates
     # (PACK_PROTOCOL.md section 8). A missing or wrong secret answers 401.
-    handle /pack/v1/* {
+    handle /crew/v1/* {
         reverse_proxy 127.0.0.1:8787 {
             header_up Host {host}
         }
