@@ -8,6 +8,7 @@
 #   OAUTH2_PROXY_CLIENT_ID      var:    GitHub OAuth app client id
 #   OAUTH2_PROXY_CLIENT_SECRET  secret: GitHub OAuth app client secret
 #   OAUTH2_PROXY_COOKIE_SECRET  secret: 32 random bytes, base64 (openssl rand -base64 32)
+#   ALLOWED_EMAILS              secret: login allowlist, one email per line
 services:
   oauth2-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.4
@@ -44,8 +45,15 @@ services:
       KITSHN_DEPLOYMENT: ${KITSHN_DEPLOYMENT}
     volumes:
       - ${KITSHN_SOCKET_DIR}:${KITSHN_SOCKET_DIR}
-      - ./emails.txt:/config/emails.txt:ro
+    configs:
+      - source: allowed_emails
+        target: /config/emails.txt
     # No healthcheck: the image is distroless (no shell, no test, no curl), so a
     # CMD check can never pass. KitSHn then waits for "running" only. Limit:
     # revisit if oauth2-proxy ships a health binary or KitSHn learns socket probes.
     restart: unless-stopped
+
+configs:
+  # The allowlist is a secret param, so it is not in the repo.
+  allowed_emails:
+    content: ${ALLOWED_EMAILS:?ALLOWED_EMAILS is required}

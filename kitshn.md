@@ -8,9 +8,9 @@ for `collie.yarden-zamir.com` that gates the Collie bridge on the host.
 
 - `.kitshn.yaml` maps `main` to `prod`. There are no PR previews.
 - `.github/workflows/kitshn.yml` calls the reusable KitSHn deploy workflow.
-- `compose.yml` runs oauth2-proxy. It reads `emails.txt` from the recipe checkout.
+- `compose.yml` runs oauth2-proxy. It mounts the `ALLOWED_EMAILS` param as `/config/emails.txt`.
 - `Caddyfile.j2` renders the route. `Caddyfile` is generated and ignored.
-- `KITSHN_OAUTH2_PROXY_*` GitHub vars and secrets become the container params.
+- `KITSHN_OAUTH2_PROXY_*` and `KITSHN_ALLOWED_EMAILS` GitHub vars and secrets become the container params.
 - `KITSHN_SSH_KEY` and `KITSHN_VPS_HOST` are set by `kitshn recipe auth`.
 
 ## Origin

@@ -6,8 +6,8 @@ at `https://collie.yarden-zamir.com`.
 ## What it deploys
 
 - One container: `oauth2-proxy` with the GitHub provider. It listens on the KitSHn
-  Unix socket. Only the GitHub user `Yarden-zamir` with an email in `emails.txt`
-  can log in. The cookie lasts 30 days.
+  Unix socket. Only the GitHub user `Yarden-zamir` with an email in the
+  `KITSHN_ALLOWED_EMAILS` secret can log in. The cookie lasts 30 days.
 - One Caddy route: `/auth/*` goes to oauth2-proxy. Everything else passes
   `forward_auth`, then reaches the Collie bridge on `127.0.0.1:8787`.
 
@@ -23,6 +23,7 @@ Set in the GitHub repo settings. KitSHn strips the `KITSHN_` prefix.
 | `KITSHN_OAUTH2_PROXY_CLIENT_ID` | variable | GitHub OAuth app client id |
 | `KITSHN_OAUTH2_PROXY_CLIENT_SECRET` | secret | GitHub OAuth app client secret |
 | `KITSHN_OAUTH2_PROXY_COOKIE_SECRET` | secret | `openssl rand -base64 32` |
+| `KITSHN_ALLOWED_EMAILS` | secret | Login allowlist, one email per line |
 
 GitHub OAuth app (https://github.com/settings/developers, "New OAuth App"):
 
@@ -47,4 +48,4 @@ COLLIE_DEVICE_ALLOWLIST=Yarden-zamir
 ## Security note
 
 Collie hands out a shell as the user that runs herdr. The oauth2-proxy allowlist
-is the only defense on the public side. Keep `emails.txt` to your own addresses only.
+is the only defense on the public side. Keep `KITSHN_ALLOWED_EMAILS` to your own addresses only.
