@@ -1,5 +1,7 @@
 # collie-gate
 
+[![kitshn](https://kitshn.yarden-zamir.com/b/Yarden-zamir/collie-gate.svg)](https://collie.yarden-zamir.com)
+
 KitSHn recipe for the login gate in front of [Collie](https://github.com/AltanS/collie)
 at `https://collie.yarden-zamir.com`.
 
