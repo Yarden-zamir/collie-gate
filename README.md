@@ -1,6 +1,8 @@
 # collie-gate
 
-[![kitshn](https://kitshn.yarden-zamir.com/b/Yarden-zamir/collie-gate.svg)](https://collie.yarden-zamir.com)
+> **Sunset on 2026-10-12.** Collie and this gate no longer run on the VPS. The KitSHn
+> deployment, the route `collie.yarden-zamir.com`, the Collie service, its deploy workflow, and
+> its deploy secrets are removed. The text below describes how it ran before.
 
 KitSHn recipe for the login gate in front of [Collie](https://github.com/AltanS/collie)
 at `https://collie.yarden-zamir.com`.
